@@ -17,8 +17,9 @@ from selenium.common.exceptions import TimeoutException
 
 
 # Configuration
-INPUT_FILE = "ProjectLinks.xlsx"
-OUTPUT_FILE = r"out\test_out.tsv"
+INPUT_FILE = "in.txt"
+OUTPUT_FILE = r"out\out.tsv"
+LINK_COLUMN_NAME = "GeneratedLink"
 LONG_TIMEOUT_SECONDS = 6
 TIMEOUT_SECONDS = 3
 RUN_HEADLESS = False  # Currently headless mode causes login issues
@@ -31,14 +32,14 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 if INPUT_FILE.endswith(".xlsx"):
     xlsx_path = os.path.join(dir_path, INPUT_FILE)
     df = pd.read_excel(xlsx_path)
-    empty_rows = df[df["GeneratedLink"].isna()]  # Drop empty rows without a URL
+    empty_rows = df[df[LINK_COLUMN_NAME].isna()]  # Drop empty rows without a URL
     df.drop(empty_rows.index, inplace=True)
     num_links = len(df)
 elif INPUT_FILE.endswith(".txt"):  # Should be a plain text file with one URL per line
     with open(os.path.join(dir_path, INPUT_FILE), "r") as f:
         data = f.read().splitlines()
     links = [link for link in data if link.strip()][1:]  # Skips header (first line)
-    df = pd.DataFrame(links, columns=["GeneratedLink"])
+    df = pd.DataFrame(links, columns=[LINK_COLUMN_NAME])
     df['Project Number'] = ""  # Add a placeholder column for Project Number
     num_links = len(links)
 else:
@@ -97,7 +98,7 @@ try:
     i = 0
     for _, row in df.iterrows():
         project_number = row["Project Number"]
-        url = row["GeneratedLink"]
+        url = row[LINK_COLUMN_NAME]
         i += 1
         if pd.isna(url):
             # This should not happen since we dropped empty rows, but just in case.
@@ -159,7 +160,7 @@ try:
     except Exception as e:
         print(f"Error writing to output file '{OUTPUT_FILE}': {str(e)}")
 except KeyboardInterrupt:
-    print("Process interrupted by user. Quitting...")
+    print("Process interrupted by user")
     exit_error = True
 except Exception as e:
     print(f"Unexpected error: {str(e)}")
